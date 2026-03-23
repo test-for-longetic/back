@@ -28,3 +28,29 @@ app.get("/reports", async (_req, res) => {
 app.listen(PORT, () => {
   console.log(`API running on http://localhost:${PORT}`);
 });
+
+app.post("/reports", async (req, res) => {
+  try {
+    const { sourceFileName, reportDate, biomarkers } = req.body;
+
+    const report = await prisma.report.create({
+      data: {
+        sourceFileName,
+        sourceFileType: "manual",
+        reportDate: new Date(reportDate),
+
+        biomarkers: {
+          create: biomarkers,
+        },
+      },
+      include: {
+        biomarkers: true,
+      },
+    });
+
+    res.json(report);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to create report" });
+  }
+});
