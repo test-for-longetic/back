@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Report {
+  id             String            @id @default(cuid())
+  sourceFileName String
+  sourceFileType String
+  filePath       String?
+  reportDate     DateTime
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  biomarkers     BiomarkerResult[]
+}
+
+model BiomarkerResult {
+  id             String   @id @default(cuid())
+  reportId       String
+  name           String
+  normalizedName String
+  value          Float
+  unit           String?
+  referenceMin   Float?
+  referenceMax   Float?
+  status         String?
+  confidence     Float?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  report         Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+}
