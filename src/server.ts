@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import multer from "multer";
 import fs from "fs";
+import path from "path";
 import { PDFParse } from "pdf-parse";
 import { prisma } from "./lib/prisma";
 import { parseCsv } from "./utils/parseCsv";
@@ -231,6 +232,28 @@ app.delete("/reports/:id", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to delete report" });
+  }
+});
+
+app.post("/reset", async (_req, res) => {
+  try {
+    await prisma.biomarkerResult.deleteMany();
+    await prisma.report.deleteMany();
+
+    const uploadsDir = path.join(process.cwd(), "uploads");
+
+    if (fs.existsSync(uploadsDir)) {
+      const files = fs.readdirSync(uploadsDir);
+
+      for (const file of files) {
+        fs.unlinkSync(path.join(uploadsDir, file));
+      }
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to reset application data" });
   }
 });
 
