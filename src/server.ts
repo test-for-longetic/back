@@ -199,6 +199,41 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   }
 });
 
+app.get("/biomarkers", async (_req, res) => {
+  try {
+    const biomarkers = await prisma.biomarkerResult.findMany({
+      select: {
+        name: true,
+        normalizedName: true,
+      },
+      distinct: ["normalizedName"],
+      orderBy: {
+        normalizedName: "asc",
+      },
+    });
+
+    res.json(biomarkers);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch biomarkers" });
+  }
+});
+
+app.delete("/reports/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await prisma.report.delete({
+      where: { id },
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to delete report" });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`API running on http://localhost:${PORT}`);
 });
