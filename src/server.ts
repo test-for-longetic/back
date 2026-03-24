@@ -54,3 +54,46 @@ app.post("/reports", async (req, res) => {
     res.status(500).json({ error: "Failed to create report" });
   }
 });
+
+app.get("/reports/:id", async (req, res) => {
+  try {
+    const report = await prisma.report.findUnique({
+      where: {
+        id: req.params.id,
+      },
+      include: {
+        biomarkers: true,
+      },
+    });
+
+    if (!report) {
+      res.status(404).json({ error: "Report not found" });
+      return;
+    }
+
+    res.json(report);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch report" });
+  }
+});
+
+app.patch("/biomarkers/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { value, unit } = req.body;
+
+    const updated = await prisma.biomarkerResult.update({
+      where: { id },
+      data: {
+        ...(value !== undefined && { value }),
+        ...(unit !== undefined && { unit }),
+      },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to update biomarker" });
+  }
+});
