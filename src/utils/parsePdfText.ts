@@ -48,9 +48,7 @@ export function parsePdfText(text: string): ExtractedBiomarker[] {
   for (const line of lines) {
     for (const biomarker of KNOWN_BIOMARKERS) {
       if (!line.toLowerCase().includes(biomarker.toLowerCase())) continue;
-
-      // Приклад очікуваного рядка:
-      // Glucose 5.8 mmol/L 3.9 5.5
+      
       const numberMatches = line.match(/-?\d+(\.\d+)?/g) ?? [];
 
       if (numberMatches.length === 0) continue;
