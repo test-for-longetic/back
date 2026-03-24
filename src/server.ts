@@ -1,7 +1,11 @@
 import express from "express";
 import cors from "cors";
 import multer from "multer";
+import fs from "fs";
+import { PDFParse } from "pdf-parse";
 import { prisma } from "./lib/prisma";
+import { parseCsv } from "./utils/parseCsv";
+import { parsePdfText } from "./utils/parsePdfText";
 
 const app = express();
 const PORT = 4000;
@@ -153,26 +157,36 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       return;
     }
 
-    const extractedBiomarkers = [
-      {
-        name: "Glucose",
-        normalizedName: "glucose",
-        value: 5.8,
-        unit: "mmol/L",
-        referenceMin: 3.9,
-        referenceMax: 5.5,
-        status: "high",
-      },
-      {
-        name: "Hemoglobin",
-        normalizedName: "hemoglobin",
-        value: 141,
-        unit: "g/L",
-        referenceMin: 130,
-        referenceMax: 170,
-        status: "normal",
-      },
-    ];
+    let extractedBiomarkers: Array<{
+      name: string;
+      normalizedName: string;
+      value: number;
+      unit?: string;
+      referenceMin?: number;
+      referenceMax?: number;
+      status?: string;
+    }> = [];
+
+    if (file.mimetype.includes("csv")) {
+      const fileContent = fs.readFileSync(file.path, "utf-8");
+      extractedBiomarkers = parseCsv(fileContent);
+    } else if (file.mimetype.includes("pdf")) {
+      const parser = new PDFParse({ data: fs.readFileSync(file.path) });
+      const pdfData = await parser.getText();
+      extractedBiomarkers = parsePdfText(pdfData.text);
+    } else {
+      extractedBiomarkers = [
+        {
+          name: "Glucose",
+          normalizedName: "glucose",
+          value: 5.8,
+          unit: "mmol/L",
+          referenceMin: 3.9,
+          referenceMax: 5.5,
+          status: "high",
+        },
+      ];
+    }
 
     res.json({
       fileName: file.originalname,
