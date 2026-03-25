@@ -1,52 +1,40 @@
-# 🧪 Blood Test API
+# Blood Test API
 
 Backend service for uploading lab reports, extracting biomarkers, storing results, editing extracted values, deleting reports, resetting demo data, and providing trend analytics.
 
-This API is designed as a lightweight MVP with a realistic data flow and clean architecture.
+This API is implemented as a lightweight MVP with a realistic file-processing flow and simple local persistence.
 
----
+## Features
 
-## ✨ Features
-
-### 📤 File Upload & Extraction
+### File upload and extraction
 - Upload CSV and PDF files
-- Save uploaded files locally in the `uploads/` directory
-- CSV files are parsed directly
-- Text-based PDFs are parsed via PDF text extraction
-- Unsupported formats can fall back to mocked extraction behavior
+- Store uploaded files locally in the `uploads/` directory
+- Parse CSV files directly
+- Extract text from text-based PDFs and map supported biomarkers
+- Return extracted biomarker drafts for frontend review before saving
+- Fallback extraction path for unsupported formats
 
-### 🧠 Biomarker Extraction
-The API extracts structured biomarker drafts with:
-- `name`
-- `normalizedName`
-- `value`
-- `unit`
-- `referenceMin`
-- `referenceMax`
-- `status`
-
-### 🗂 Reports Management
-- Create reports with extracted biomarkers
+### Reports
+- Create reports with associated biomarkers
 - Retrieve all reports
 - Retrieve a single report with all biomarkers
-- Delete reports with cascade removal of related biomarkers
+- Delete reports with cascade deletion of related biomarkers
 
-### ✏️ Editable Biomarkers
-- Update biomarker values and units after extraction
-- Supports frontend inline editing flow
+### Biomarkers
+- Edit biomarker values and units after extraction
+- Support inline editing from the frontend
 
-### 📊 Trends API
+### Trends
 - Aggregate biomarker values over time
 - Query trends by normalized biomarker name
+- Return unique biomarker options for dynamic selectors
 
-### ♻️ Demo Reset
-- Reset all stored reports
-- Remove related biomarkers
-- Clear uploaded files from disk
+### Demo reset
+- Clear all reports
+- Clear all biomarkers
+- Remove uploaded files from disk
 
----
-
-## 🏗 Tech Stack
+## Tech stack
 
 - Node.js
 - Express
@@ -54,12 +42,10 @@ The API extracts structured biomarker drafts with:
 - Prisma ORM
 - SQLite
 - Multer
-- `csv-parse`
-- `pdf-parse`
+- csv-parse
+- pdf-parse
 
----
-
-## 📁 Project Structure
+## Project structure
 
 ```txt
 src/
@@ -77,17 +63,21 @@ prisma/
 uploads/
 ```
 
----
+## Getting started
 
-## 🚀 Getting Started
-
-### Install dependencies
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-### Run development server
+Run Prisma migrations:
+
+```bash
+npx prisma migrate dev
+```
+
+Run the development server:
 
 ```bash
 npm run dev
@@ -99,112 +89,40 @@ The API runs on:
 http://localhost:4000
 ```
 
----
-
-## 🗄 Database
-
-This project uses **SQLite** for simplicity and fast local setup.
-
-Prisma manages:
-- schema
-- migrations
-- client generation
-
-### Run migrations
+## Build and start
 
 ```bash
-npx prisma migrate dev
+npm run build
+npm run start
 ```
 
----
+## API endpoints
 
-## 📦 API Endpoints
-
-### Health Check
-
+### Health
 ```http
 GET /health
 ```
 
-Returns a simple service status payload.
-
----
-
 ### Reports
-
 ```http
 GET /reports
-```
-Returns all reports with biomarkers.
-
-```http
 GET /reports/:id
-```
-Returns a single report with biomarkers.
-
-```http
 POST /reports
-```
-Creates a report and associated biomarkers.
-
-```http
 DELETE /reports/:id
 ```
-Deletes a report and cascades related biomarker deletion.
-
----
 
 ### Biomarkers
-
 ```http
 PATCH /biomarkers/:id
 ```
-Updates editable biomarker fields such as:
-- `value`
-- `unit`
-
----
 
 ### Trends
-
 ```http
 GET /trends?biomarker=glucose
-```
-
-Returns time-series data for a selected biomarker.
-
-Example response:
-
-```json
-[
-  { "date": "2026-03-20T00:00:00.000Z", "value": 5.8 },
-  { "date": "2026-03-24T00:00:00.000Z", "value": 6.3 }
-]
-```
-
----
-
-### Biomarker Options
-
-```http
 GET /biomarkers
 ```
 
-Returns unique biomarker options for dynamic frontend selectors.
-
-Example response:
-
-```json
-[
-  { "name": "Glucose", "normalizedName": "glucose" },
-  { "name": "Hemoglobin", "normalizedName": "hemoglobin" }
-]
-```
-
----
-
 ### Upload
-
 ```http
 POST /upload
 ```
@@ -212,55 +130,25 @@ POST /upload
 Accepts a multipart file upload and returns extracted biomarker draft data.
 
 Behavior:
-- CSV → parsed directly
-- PDF → text extraction + rule-based parsing
-- unsupported files → fallback extraction
+- CSV -> parsed directly
+- PDF -> text extraction plus rule-based parsing
+- unsupported files -> fallback extraction
 
-Example response:
-
-```json
-{
-  "fileName": "report.pdf",
-  "filePath": "uploads/1710000000000-report.pdf",
-  "biomarkers": [
-    {
-      "name": "Glucose",
-      "normalizedName": "glucose",
-      "value": 5.8,
-      "unit": "mmol/L",
-      "referenceMin": 3.9,
-      "referenceMax": 5.5,
-      "status": "high"
-    }
-  ]
-}
-```
-
----
-
-### Reset Demo Data
-
+### Reset demo data
 ```http
 POST /reset
 ```
 
-Deletes:
-- all reports
-- all biomarkers
-- all uploaded files
+Deletes all reports, biomarkers, and uploaded files.
 
-Useful for local testing and demo resets.
-
----
-
-## 🧠 Extraction Pipeline
+## Extraction pipeline
 
 ```txt
-Upload → Detect file type → Parse → Normalize → Return draft → Review → Save
+Upload -> Detect file type -> Parse -> Normalize -> Return draft -> Review -> Save
 ```
 
 ### CSV
-CSV parsing is supported directly using expected column names such as:
+CSV parsing supports expected columns such as:
 - `name`
 - `value`
 - `unit`
@@ -271,46 +159,41 @@ CSV parsing is supported directly using expected column names such as:
 ### PDF
 Text-based PDFs are parsed by:
 1. extracting text from the file
-2. scanning for known biomarkers
+2. scanning for supported biomarkers
 3. mapping numeric values and simple reference ranges
 
 ### Images / OCR
 Not implemented in this MVP.
 
----
+## Notes
 
-## ⚠️ Limitations
+- The app is intentionally modeled as a single-user demo flow
+- Extraction is best-effort and designed to be reviewed in the frontend before persistence
+- SQLite is used for simplicity and local setup speed
+
+## Limitations
 
 - No authentication
-- Single-user demo flow
 - No OCR for image uploads
 - PDF extraction works only for text-based PDFs
-- Biomarker parsing is rule-based, not LLM-based
+- Biomarker parsing is rule-based
 - Validation is intentionally lightweight
 
----
+## Future improvements
 
-## 🧩 Future Improvements
+- OCR support for images and scanned PDFs
+- LLM-assisted extraction
+- Per-user ownership and authentication
+- Stronger biomarker normalization and validation
+- Background processing for heavy uploads
+- Automated tests for parsing and endpoints
 
-- Add OCR support for image/scanned PDF uploads
-- Add LLM-assisted extraction for more flexible parsing
-- Add authentication and per-user ownership
-- Add stronger validation and medical normalization
-- Store upload metadata more explicitly on reports
-- Add background jobs for extraction
-- Add automated tests for parsing and endpoints
-
----
-
-## 🎯 Summary
+## Summary
 
 This backend provides a practical MVP pipeline for:
-
 - uploading lab data
 - extracting biomarkers
 - reviewing and editing values
 - storing reports
 - analyzing trends
 - resetting demo state quickly
-
-It is intentionally simple, extensible, and optimized for local development and product iteration.
